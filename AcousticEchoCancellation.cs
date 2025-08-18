@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Numerics;
 
-//not working I feel
+//not working I feel, or maybe it does work, but just for a nonlinear system
 namespace AcousticEchoCancellation
 {
     /// <summary>
