@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double Pendulum Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .simulation-area {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        canvas {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            display: block;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            min-width: 280px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .value-display {
+            min-width: 50px;
+            text-align: right;
+            font-family: monospace;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(45deg, #da190b, #f44336);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .clear-btn {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: linear-gradient(45deg, #0b7dda, #2196F3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            canvas {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Double Pendulum Chaos</h1>
+    
+    <div class="container">
+        <div class="simulation-area">
+            <canvas id="pendulumCanvas" width="600" height="500"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Mass 1 (kg)</label>
+                <div class="slider-container">
+                    <input type="range" id="mass1" min="1" max="10" value="5" step="0.1">
+                    <span class="value-display" id="mass1Value">5.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Mass 2 (kg)</label>
+                <div class="slider-container">
+                    <input type="range" id="mass2" min="1" max="10" value="3" step="0.1">
+                    <span class="value-display" id="mass2Value">3.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Length 1 (m)</label>
+                <div class="slider-container">
+                    <input type="range" id="length1" min="50" max="200" value="120" step="5">
+                    <span class="value-display" id="length1Value">120</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Length 2 (m)</label>
+                <div class="slider-container">
+                    <input type="range" id="length2" min="50" max="200" value="100" step="5">
+                    <span class="value-display" id="length2Value">100</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Initial Angle 1 (°)</label>
+                <div class="slider-container">
+                    <input type="range" id="angle1" min="-180" max="180" value="90" step="5">
+                    <span class="value-display" id="angle1Value">90</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Initial Angle 2 (°)</label>
+                <div class="slider-container">
+                    <input type="range" id="angle2" min="-180" max="180" value="45" step="5">
+                    <span class="value-display" id="angle2Value">45</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Damping</label>
+                <div class="slider-container">
+                    <input type="range" id="damping" min="0" max="1" value="0.01" step="0.001">
+                    <span class="value-display" id="dampingValue">0.010</span>
+                </div>
+            </div>
+            
+            <button class="start-btn" id="startBtn">Start</button>
+            <button class="reset-btn" id="resetBtn">Reset</button>
+            <button class="clear-btn" id="clearBtn">Clear Trail</button>
+            
+            <div class="info">
+                <strong>About Double Pendulums:</strong><br>
+                A double pendulum exhibits chaotic motion - small changes in initial conditions lead to dramatically different trajectories. This system demonstrates sensitive dependence on initial conditions, a hallmark of chaos theory.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class DoublePendulum {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width;
+                this.height = canvas.height;
+                this.centerX = this.width / 2;
+                this.centerY = 100;
+                
+                // Physics parameters
+                this.m1 = 5; // mass 1
+                this.m2 = 3; // mass 2
+                this.L1 = 120; // length 1
+                this.L2 = 100; // length 2
+                this.g = 9.81; // gravity
+                this.damping = 0.01;
+                
+                // Initial conditions (in radians)
+                this.theta1 = Math.PI / 2; // 90 degrees
+                this.theta2 = Math.PI / 4; // 45 degrees
+                this.omega1 = 0; // angular velocity 1
+                this.omega2 = 0; // angular velocity 2
+                
+                this.trail = [];
+                this.maxTrailLength = 1000;
+                this.running = false;
+                this.animationId = null;
+                
+                this.updateDisplay();
+            }
+            
+            updateParameters() {
+                this.m1 = parseFloat(document.getElementById('mass1').value);
+                this.m2 = parseFloat(document.getElementById('mass2').value);
+                this.L1 = parseFloat(document.getElementById('length1').value);
+                this.L2 = parseFloat(document.getElementById('length2').value);
+                this.theta1 = parseFloat(document.getElementById('angle1').value) * Math.PI / 180;
+                this.theta2 = parseFloat(document.getElementById('angle2').value) * Math.PI / 180;
+                this.damping = parseFloat(document.getElementById('damping').value);
+                this.omega1 = 0;
+                this.omega2 = 0;
+                this.trail = [];
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                // Calculate positions
+                const x1 = this.centerX + this.L1 * Math.sin(this.theta1);
+                const y1 = this.centerY + this.L1 * Math.cos(this.theta1);
+                const x2 = x1 + this.L2 * Math.sin(this.theta2);
+                const y2 = y1 + this.L2 * Math.cos(this.theta2);
+                
+                // Clear canvas
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Draw trail
+                if (this.trail.length > 1) {
+                    this.ctx.strokeStyle = '#FF6B6B';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.globalAlpha = 0.7;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        this.ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = 1.0;
+                }
+                
+                // Draw pendulum arms
+                this.ctx.strokeStyle = '#4ECDC4';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.centerX, this.centerY);
+                this.ctx.lineTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+                
+                // Draw pivot point
+                this.ctx.fillStyle = '#45B7D1';
+                this.ctx.beginPath();
+                this.ctx.arc(this.centerX, this.centerY, 8, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                // Draw masses
+                const radius1 = Math.max(8, Math.min(20, this.m1 * 3));
+                const radius2 = Math.max(8, Math.min(20, this.m2 * 3));
+                
+                // Mass 1
+                this.ctx.fillStyle = '#96CEB4';
+                this.ctx.beginPath();
+                this.ctx.arc(x1, y1, radius1, 0, 2 * Math.PI);
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#FFFFFF';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                // Mass 2
+                this.ctx.fillStyle = '#FECA57';
+                this.ctx.beginPath();
+                this.ctx.arc(x2, y2, radius2, 0, 2 * Math.PI);
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#FFFFFF';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                // Add to trail
+                if (this.running) {
+                    this.trail.push({ x: x2, y: y2 });
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                }
+            }
+            
+            calculateDerivatives() {
+                const num1 = -this.m2 * this.L1 * this.omega1 * this.omega1 * Math.sin(this.theta1 - this.theta2) * Math.cos(this.theta1 - this.theta2) +
+                            this.m2 * this.g * Math.sin(this.theta2) * Math.cos(this.theta1 - this.theta2) +
+                            this.m2 * this.L2 * this.omega2 * this.omega2 * Math.sin(this.theta1 - this.theta2) -
+                            (this.m1 + this.m2) * this.g * Math.sin(this.theta1);
+                
+                const den1 = this.L1 * (this.m1 + this.m2) - this.m2 * this.L1 * Math.cos(this.theta1 - this.theta2) * Math.cos(this.theta1 - this.theta2);
+                
+                const num2 = -this.m2 * this.L2 * this.omega2 * this.omega2 * Math.sin(this.theta1 - this.theta2) * Math.cos(this.theta1 - this.theta2) +
+                            (this.m1 + this.m2) * this.g * Math.sin(this.theta1) * Math.cos(this.theta1 - this.theta2) -
+                            (this.m1 + this.m2) * this.L1 * this.omega1 * this.omega1 * Math.sin(this.theta1 - this.theta2) -
+                            (this.m1 + this.m2) * this.g * Math.sin(this.theta2);
+                
+                const den2 = this.L2 * (this.m1 + this.m2) - this.m2 * this.L2 * Math.cos(this.theta1 - this.theta2) * Math.cos(this.theta1 - this.theta2);
+                
+                const domega1_dt = num1 / den1 - this.damping * this.omega1;
+                const domega2_dt = num2 / den2 - this.damping * this.omega2;
+                
+                return {
+                    domega1_dt: domega1_dt,
+                    domega2_dt: domega2_dt
+                };
+            }
+            
+            update() {
+                if (!this.running) return;
+                
+                const dt = 0.01; // time step
+                const derivatives = this.calculateDerivatives();
+                
+                // Update angular velocities
+                this.omega1 += derivatives.domega1_dt * dt;
+                this.omega2 += derivatives.domega2_dt * dt;
+                
+                // Update angles
+                this.theta1 += this.omega1 * dt;
+                this.theta2 += this.omega2 * dt;
+                
+                this.updateDisplay();
+                this.animationId = requestAnimationFrame(() => this.update());
+            }
+            
+            start() {
+                this.running = true;
+                this.update();
+            }
+            
+            stop() {
+                this.running = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+            
+            reset() {
+                this.stop();
+                this.updateParameters();
+                this.trail = [];
+                this.updateDisplay();
+            }
+            
+            clearTrail() {
+                this.trail = [];
+                this.updateDisplay();
+            }
+        }
+        
+        // Initialize simulation
+        const canvas = document.getElementById('pendulumCanvas');
+        const pendulum = new DoublePendulum(canvas);
+        
+        // Control elements
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        // Slider elements and their value displays
+        const sliders = [
+            { slider: 'mass1', display: 'mass1Value', decimals: 1 },
+            { slider: 'mass2', display: 'mass2Value', decimals: 1 },
+            { slider: 'length1', display: 'length1Value', decimals: 0 },
+            { slider: 'length2', display: 'length2Value', decimals: 0 },
+            { slider: 'angle1', display: 'angle1Value', decimals: 0 },
+            { slider: 'angle2', display: 'angle2Value', decimals: 0 },
+            { slider: 'damping', display: 'dampingValue', decimals: 3 }
+        ];
+        
+        // Update value displays and pendulum parameters
+        sliders.forEach(({ slider, display, decimals }) => {
+            const sliderEl = document.getElementById(slider);
+            const displayEl = document.getElementById(display);
+            
+            sliderEl.addEventListener('input', () => {
+                displayEl.textContent = parseFloat(sliderEl.value).toFixed(decimals);
+                if (!pendulum.running) {
+                    pendulum.updateParameters();
+                }
+            });
+        });
+        
+        // Button event listeners
+        startBtn.addEventListener('click', () => {
+            if (pendulum.running) {
+                pendulum.stop();
+                startBtn.textContent = 'Start';
+                startBtn.className = 'start-btn';
+            } else {
+                pendulum.start();
+                startBtn.textContent = 'Pause';
+                startBtn.className = 'reset-btn';
+            }
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            pendulum.reset();
+            startBtn.textContent = 'Start';
+            startBtn.className = 'start-btn';
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            pendulum.clearTrail();
+        });
+        
+        // Initial render
+        pendulum.updateDisplay();
+    </script>
+</body>
+</html>
