@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homomorphic Encryption Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .demo-section {
+            background: linear-gradient(45deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .result {
+            background: #f0fff4;
+            border: 2px solid #68d391;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .encrypted {
+            background: #fffaf0;
+            border: 2px solid #f6ad55;
+            color: #744210;
+        }
+
+        .decrypted {
+            background: #f0f9ff;
+            border: 2px solid #60a5fa;
+            color: #1e3a8a;
+        }
+
+        .step {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .concept-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .math {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            background: #f8f9fa;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .warning {
+            background: #fef3cd;
+            border: 1px solid #fad87a;
+            color: #8b5a2b;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .input-group { flex-direction: column; }
+            .concept-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Homomorphic Encryption</h1>
+            <p>Compute on encrypted data without decrypting it</p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="card">
+            <h2>What is Homomorphic Encryption?</h2>
+            <p>Homomorphic encryption allows computations to be performed on encrypted data without decrypting it first. The result, when decrypted, matches the result of operations performed on the plaintext.</p>
+            
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <div class="concept-icon">🔒</div>
+                    <h3>Encrypt</h3>
+                    <p>Data is encrypted before processing</p>
+                </div>
+                <div class="concept-card">
+                    <div class="concept-icon">⚙️</div>
+                    <h3>Compute</h3>
+                    <p>Operations performed on encrypted data</p>
+                </div>
+                <div class="concept-card">
+                    <div class="concept-icon">🔓</div>
+                    <h3>Decrypt</h3>
+                    <p>Final result matches plaintext operations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simple Demo -->
+        <div class="card">
+            <h2>🧮 Interactive Demo: Simple Additive Homomorphic Encryption</h2>
+            <div class="warning">
+                <strong>Note:</strong> This is a simplified educational example using basic modular arithmetic. Real homomorphic encryption schemes are much more complex and secure.
+            </div>
+
+            <div class="demo-section">
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>First Number (a):</label>
+                        <input type="number" id="num1" value="5" min="0" max="100">
+                    </div>
+                    <div class="input-field">
+                        <label>Second Number (b):</label>
+                        <input type="number" id="num2" value="7" min="0" max="100">
+                    </div>
+                    <div class="input-field">
+                        <label>Encryption Key:</label>
+                        <input type="number" id="key" value="13" min="2" max="50">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="demonstrateHomomorphic()">🔄 Run Demonstration</button>
+
+                <div id="results" style="display: none;">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>Original values:</strong> a = <span id="orig-a"></span>, b = <span id="orig-b"></span>
+                    </div>
+                    
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <strong>Encrypt both numbers:</strong><br>
+                        E(a) = <span id="enc-a" class="math"></span><br>
+                        E(b) = <span id="enc-b" class="math"></span>
+                    </div>
+
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <strong>Compute on encrypted data:</strong><br>
+                        E(a) + E(b) = <span id="enc-sum" class="math"></span>
+                    </div>
+
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <strong>Decrypt the result:</strong><br>
+                        D(E(a) + E(b)) = <span id="decrypted-result" class="math"></span>
+                    </div>
+
+                    <div class="step">
+                        <span class="step-number">5</span>
+                        <strong>Verify:</strong><br>
+                        Direct computation: a + b = <span id="direct-result" class="math"></span><br>
+                        <span id="verification" style="font-weight: bold;"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mathematical Foundation -->
+        <div class="card">
+            <h2>📐 Mathematical Foundation</h2>
+            <p>Our simple example uses the additive homomorphic property:</p>
+            
+            <div class="demo-section">
+                <div style="text-align: center; font-size: 1.2rem; margin: 1rem 0;">
+                    <span class="math">E(a) ⊕ E(b) = E(a + b)</span>
+                </div>
+                
+                <p><strong>Encryption:</strong> <span class="math">E(x) = (x × key) mod 256</span></p>
+                <p><strong>Decryption:</strong> <span class="math">D(y) = (y × key⁻¹) mod 256</span></p>
+                <p><strong>Homomorphic Operation:</strong> <span class="math">E(a) + E(b) mod 256</span></p>
+
+                <div class="warning">
+                    <strong>Important:</strong> This is a toy example for educational purposes. Real homomorphic encryption schemes like BGV, BFV, or CKKS are far more sophisticated and secure.
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications -->
+        <div class="card">
+            <h2>🌟 Real-World Applications</h2>
+            
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <div class="concept-icon">🏥</div>
+                    <h3>Healthcare</h3>
+                    <p>Analyze medical data while preserving patient privacy</p>
+                </div>
+                <div class="concept-card">
+                    <div class="concept-icon">💰</div>
+                    <h3>Finance</h3>
+                    <p>Risk analysis on encrypted financial data</p>
+                </div>
+                <div class="concept-card">
+                    <div class="concept-icon">☁️</div>
+                    <h3>Cloud Computing</h3>
+                    <p>Secure computation in untrusted environments</p>
+                </div>
+                <div class="concept-card">
+                    <div class="concept-icon">🗳️</div>
+                    <h3>Voting Systems</h3>
+                    <p>Count votes while maintaining ballot secrecy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Types of HE -->
+        <div class="card">
+            <h2>🔧 Types of Homomorphic Encryption</h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Partially Homomorphic (PHE):</strong> Supports only one type of operation (either addition or multiplication) for unlimited times.
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Somewhat Homomorphic (SHE):</strong> Supports both addition and multiplication, but only for a limited number of operations.
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Fully Homomorphic (FHE):</strong> Supports arbitrary computations (any combination of additions and multiplications) without limits.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Try It Yourself</h2>
+            <p>Experiment with different values in the demo above to see how homomorphic encryption preserves the computational relationship between encrypted values. Notice how the encrypted values look completely different from the original numbers, yet mathematical operations still work correctly!</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple homomorphic encryption demonstration
+        function demonstrateHomomorphic() {
+            const num1 = parseInt(document.getElementById('num1').value);
+            const num2 = parseInt(document.getElementById('num2').value);
+            const key = parseInt(document.getElementById('key').value);
+
+            // Calculate modular multiplicative inverse
+            function modInverse(a, m) {
+                for (let x = 1; x < m; x++) {
+                    if ((a * x) % m === 1) return x;
+                }
+                return 1;
+            }
+
+            // Simple encryption: (value * key) mod 256
+            function encrypt(value, key) {
+                return (value * key) % 256;
+            }
+
+            // Simple decryption: (encrypted * inverse) mod 256
+            function decrypt(encrypted, key) {
+                const inverse = modInverse(key, 256);
+                return (encrypted * inverse) % 256;
+            }
+
+            // Encrypt both numbers
+            const encA = encrypt(num1, key);
+            const encB = encrypt(num2, key);
+
+            // Perform homomorphic addition
+            const encSum = (encA + encB) % 256;
+
+            // Decrypt the result
+            const decryptedSum = decrypt(encSum, key);
+
+            // Direct computation for verification
+            const directSum = num1 + num2;
+
+            // Display results
+            document.getElementById('orig-a').textContent = num1;
+            document.getElementById('orig-b').textContent = num2;
+            document.getElementById('enc-a').textContent = `(${num1} × ${key}) mod 256 = ${encA}`;
+            document.getElementById('enc-b').textContent = `(${num2} × ${key}) mod 256 = ${encB}`;
+            document.getElementById('enc-sum').textContent = `${encA} + ${encB} = ${encSum}`;
+            document.getElementById('decrypted-result').textContent = decryptedSum;
+            document.getElementById('direct-result').textContent = directSum;
+            
+            const verification = document.getElementById('verification');
+            if (decryptedSum === directSum) {
+                verification.textContent = '✅ Success! Homomorphic property verified!';
+                verification.style.color = '#22c55e';
+            } else {
+                verification.textContent = '❌ Results don\'t match. Try different values.';
+                verification.style.color = '#ef4444';
+            }
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Run initial demonstration
+        window.onload = function() {
+            demonstrateHomomorphic();
+        };
+
+        // Add input event listeners for real-time updates
+        document.getElementById('num1').addEventListener('input', demonstrateHomomorphic);
+        document.getElementById('num2').addEventListener('input', demonstrateHomomorphic);
+        document.getElementById('key').addEventListener('input', demonstrateHomomorphic);
+    </script>
+</body>
+</html>
