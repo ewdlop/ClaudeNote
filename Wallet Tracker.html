@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Wallet Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .wallet-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            min-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .wallet-title {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .money-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            word-break: break-all;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .money-display.animate {
+            transform: scale(1.05);
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .increment-amount {
+            margin: 20px 0;
+        }
+
+        .increment-amount input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .increment-amount input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .floating-money {
+            position: fixed;
+            font-size: 2em;
+            pointer-events: none;
+            animation: float-up 2s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wallet-container">
+        <div class="wallet-title">💰 Your Wallet</div>
+        <div class="subtitle">Watch your money grow!</div>
+        
+        <div class="money-display" id="moneyDisplay">$0</div>
+        
+        <div class="increment-amount">
+            <input type="number" id="incrementInput" placeholder="Enter amount" value="1">
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="addMoney()">💵 Add Money</button>
+            <button class="btn" onclick="addBigMoney()">💎 Add $1000</button>
+            <button class="btn" onclick="addMegaMoney()">🚀 Add $1M</button>
+            <button class="btn" onclick="toggleAutoIncrement()" id="autoBtn">⚡ Start Auto</button>
+            <button class="btn" onclick="reset()">🔄 Reset</button>
+        </div>
+        
+        <div class="auto-controls" style="margin-top: 20px;">
+            <label style="opacity: 0.8; margin-right: 10px;">Auto Speed:</label>
+            <select id="autoSpeed" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 5px 10px; border-radius: 5px; backdrop-filter: blur(5px);">
+                <option value="1000">Slow (1/sec)</option>
+                <option value="500" selected>Normal (2/sec)</option>
+                <option value="250">Fast (4/sec)</option>
+                <option value="100">Ultra (10/sec)</option>
+                <option value="50">Insane (20/sec)</option>
+            </select>
+        </div>
+        
+        <div class="stats">
+            <div>Total Clicks: <span id="clickCount">0</span></div>
+            <div>Biggest Single Add: <span id="biggestAdd">$0</span></div>
+            <div id="autoStatus" style="color: #4CAF50; font-weight: bold; margin-top: 5px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Using BigInt for handling very large numbers
+        let walletMoney = 0n;
+        let totalClicks = 0;
+        let biggestSingleAdd = 0n;
+        let autoIncrement = false;
+        let autoInterval = null;
+
+        const moneyDisplay = document.getElementById('moneyDisplay');
+        const clickCountDisplay = document.getElementById('clickCount');
+        const biggestAddDisplay = document.getElementById('biggestAdd');
+        const autoBtn = document.getElementById('autoBtn');
+
+        function formatMoney(amount) {
+            const str = amount.toString();
+            // Add commas for readability
+            return '$' + str.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function updateDisplay() {
+            moneyDisplay.textContent = formatMoney(walletMoney);
+            clickCountDisplay.textContent = totalClicks.toString();
+            biggestAddDisplay.textContent = formatMoney(biggestSingleAdd);
+            
+            // Update auto status
+            const autoStatus = document.getElementById('autoStatus');
+            if (autoIncrement) {
+                const speed = document.getElementById('autoSpeed').value;
+                const perSecond = Math.round(1000 / parseInt(speed));
+                autoStatus.textContent = `🤖 Auto Mode: +${formatMoney(BigInt(Math.max(1, parseInt(document.getElementById('incrementInput').value) || 1)))} every ${speed}ms (${perSecond}/sec)`;
+            } else {
+                autoStatus.textContent = '';
+            }
+        }
+
+        function animateMoneyDisplay() {
+            moneyDisplay.classList.add('animate');
+            setTimeout(() => {
+                moneyDisplay.classList.remove('animate');
+            }, 300);
+        }
+
+        function createFloatingMoney(amount) {
+            const floating = document.createElement('div');
+            floating.className = 'floating-money';
+            floating.textContent = '+' + formatMoney(amount);
+            floating.style.left = Math.random() * window.innerWidth + 'px';
+            floating.style.top = window.innerHeight / 2 + 'px';
+            floating.style.color = '#4CAF50';
+            document.body.appendChild(floating);
+
+            setTimeout(() => {
+                floating.remove();
+            }, 2000);
+        }
+
+        function addMoney() {
+            const input = document.getElementById('incrementInput');
+            const amount = BigInt(Math.max(1, parseInt(input.value) || 1));
+            
+            walletMoney += amount;
+            totalClicks++;
+            
+            if (amount > biggestSingleAdd) {
+                biggestSingleAdd = amount;
+            }
+            
+            updateDisplay();
+            animateMoneyDisplay();
+            createFloatingMoney(amount);
+        }
+
+        function addBigMoney() {
+            const amount = 1000n;
+            walletMoney += amount;
+            totalClicks++;
+            
+            if (amount > biggestSingleAdd) {
+                biggestSingleAdd = amount;
+            }
+            
+            updateDisplay();
+            animateMoneyDisplay();
+            createFloatingMoney(amount);
+        }
+
+        function addMegaMoney() {
+            const amount = 1000000n;
+            walletMoney += amount;
+            totalClicks++;
+            
+            if (amount > biggestSingleAdd) {
+                biggestSingleAdd = amount;
+            }
+            
+            updateDisplay();
+            animateMoneyDisplay();
+            createFloatingMoney(amount);
+        }
+
+        function toggleAutoIncrement() {
+            autoIncrement = !autoIncrement;
+            
+            if (autoIncrement) {
+                const speed = parseInt(document.getElementById('autoSpeed').value);
+                autoInterval = setInterval(() => {
+                    addMoneyAuto();
+                }, speed);
+                autoBtn.textContent = '⏹️ Stop Auto';
+                autoBtn.style.background = 'rgba(244, 67, 54, 0.3)';
+            } else {
+                clearInterval(autoInterval);
+                autoBtn.textContent = '⚡ Start Auto';
+                autoBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            }
+        }
+
+        function addMoneyAuto() {
+            const input = document.getElementById('incrementInput');
+            const amount = BigInt(Math.max(1, parseInt(input.value) || 1));
+            
+            walletMoney += amount;
+            totalClicks++;
+            
+            if (amount > biggestSingleAdd) {
+                biggestSingleAdd = amount;
+            }
+            
+            updateDisplay();
+            
+            // Less frequent animations for auto mode to avoid lag
+            if (Math.random() < 0.1) {
+                animateMoneyDisplay();
+            }
+            if (Math.random() < 0.05) {
+                createFloatingMoney(amount);
+            }
+        }
+
+        function reset() {
+            if (confirm('Are you sure you want to reset your wallet?')) {
+                // Stop auto increment if running
+                if (autoIncrement) {
+                    toggleAutoIncrement();
+                }
+                
+                walletMoney = 0n;
+                totalClicks = 0;
+                biggestSingleAdd = 0n;
+                updateDisplay();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                addMoney();
+            } else if (event.code === 'Enter') {
+                event.preventDefault();
+                addMoney();
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
